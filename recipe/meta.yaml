@@ -1,4 +1,4 @@
-{% set version = "0.7.2" %}
+{% set version = "0.8.0" %}
 
 package:
   name: mangohud
@@ -6,7 +6,7 @@ package:
 
 source:
   url: https://github.com/flightlessmango/MangoHud/archive/refs/tags/v{{ version }}.tar.gz
-  sha256: 67d2425c0cc634574d8bd8a924e0e1a2e909b47ed9b8c02029b5baffe46657fc
+  sha256: 80cade0db0b8837bddab1cbb47078026771e6fb9994c1edf93cfe6aa31b3ee47
   patches:
     # https://github.com/flightlessmango/MangoHud/pull/1424
     - 1424.patch
@@ -17,7 +17,7 @@ source:
     - flag_for_disable_preload.patch
 
 build:
-  number: 4
+  number: 0
   # No support for osx https://github.com/flightlessmango/MangoHud/issues/1425
   skip: true  # [osx]
   # I'm having trouble with windows and finding python-mako
