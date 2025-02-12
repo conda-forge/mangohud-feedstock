@@ -8,8 +8,6 @@ source:
   url: https://github.com/flightlessmango/MangoHud/archive/refs/tags/v{{ version }}.tar.gz
   sha256: 80cade0db0b8837bddab1cbb47078026771e6fb9994c1edf93cfe6aa31b3ee47
   patches:
-    # https://github.com/flightlessmango/MangoHud/pull/1424
-    - 1424.patch
     # https://github.com/conda-forge/staged-recipes/pull/27526#issuecomment-2340403320
     - conda-forge-xdg-data_dirs.patch
     # Without this flag, it is too easy to freeze on vulkan apps
