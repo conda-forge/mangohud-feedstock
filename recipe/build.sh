@@ -13,7 +13,7 @@ meson setup \
     -Dwith_dbus=disabled \
     -Dinclude_doc=false \
     -Dwith_xnvctrl=disabled \
-    -Dmangoplot=disabled \
+    -Dmangoplot=enabled \
     -Ddynamic_string_tokens=false
 
 ninja -j${CPU_COUNT} -C build

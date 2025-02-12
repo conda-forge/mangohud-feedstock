@@ -5,14 +5,38 @@ package:
   version: {{ version }}
 
 source:
-  url: https://github.com/flightlessmango/MangoHud/archive/refs/tags/v{{ version }}.tar.gz
-  sha256: 80cade0db0b8837bddab1cbb47078026771e6fb9994c1edf93cfe6aa31b3ee47
-  patches:
-    # https://github.com/conda-forge/staged-recipes/pull/27526#issuecomment-2340403320
-    - conda-forge-xdg-data_dirs.patch
-    # Without this flag, it is too easy to freeze on vulkan apps
-    # https://github.com/flightlessmango/MangoHud/issues/1354
-    - flag_for_disable_preload.patch
+  - url: https://github.com/flightlessmango/MangoHud/archive/refs/tags/v{{ version }}.tar.gz
+    sha256: 80cade0db0b8837bddab1cbb47078026771e6fb9994c1edf93cfe6aa31b3ee47
+    patches:
+      # https://github.com/conda-forge/staged-recipes/pull/27526#issuecomment-2340403320
+      - conda-forge-xdg-data_dirs.patch
+      # Without this flag, it is too easy to freeze on vulkan apps
+      # https://github.com/flightlessmango/MangoHud/issues/1354
+      - flag_for_disable_preload.patch
+  - url: https://github.com/ocornut/imgui/archive/refs/tags/v1.89.9.tar.gz
+    sha256: 1acc27a778b71d859878121a3f7b287cd81c29d720893d2b2bf74455bf9d52d6
+    folder: subprojects/imgui-1.89.9
+  - url: https://github.com/epezent/implot/archive/refs/tags/v0.16.zip
+    sha256: 24f772c688f6b8a6e19d7efc10e4923a04a915f13d487b08b83553aa62ae1708
+    folder: subprojects/implot-0.16
+  - url: https://github.com/KhronosGroup/Vulkan-Headers/archive/v1.2.158.tar.gz
+    sha256: 53361271cfe274df8782e1e47bdc9e61b7af432ba30acbfe31723f9df2c257f3
+    folder: subprojects/Vulkan-Headers-1.2.158
+  # patches seem to be related to the meson build process.
+  # https://github.com/flightlessmango/MangoHud/issues/764
+  # https://github.com/flightlessmango/MangoHud/blob/f77864d5ee59a82c33220267bf47fe0b82eafdad/subprojects/implot.wrap
+  - url: https://wrapdb.mesonbuild.com/v2/imgui_1.89.9-1/get_patch
+    sha256: 9b21290c597d76bf8d4eeb3f9ffa024b11d9ea6c61e91d648ccc90b42843d584
+    fn: imgui_1.89.9-1.zip
+    folder: subprojects/imgui-1.89.9
+  - url: https://wrapdb.mesonbuild.com/v2/implot_0.16-1/get_patch
+    sha256: 1c6b1462066a5452fa50c1da1dd47fed841f28232972c82d778f2962936568c7
+    fn: implot-0.16-1.zip
+    folder: subprojects/implot-0.16
+  - url: https://wrapdb.mesonbuild.com/v2/vulkan-headers_1.2.158-2/get_patch
+    sha256: 860358cf5e73f458cd1e88f8c38116d123ab421d5ce2e4129ec38eaedd820e17
+    fn: vulkan-headers_1.2.158-2.zip
+    folder: subprojects/Vulkan-Headers-1.2.158
 
 build:
   number: 0
