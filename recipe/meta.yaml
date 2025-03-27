@@ -39,7 +39,7 @@ source:
     folder: subprojects/Vulkan-Headers-1.2.158
 
 build:
-  number: 0
+  number: 1
   # No support for osx https://github.com/flightlessmango/MangoHud/issues/1425
   skip: true  # [osx]
   # I'm having trouble with windows and finding python-mako
