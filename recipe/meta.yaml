@@ -6,7 +6,7 @@ package:
 
 source:
   - url: https://github.com/flightlessmango/MangoHud/archive/refs/tags/v{{ version }}.tar.gz
-    sha256: b9a6bc087505a21f5ab3507f8321aa47d5ecc90a5742d27bfe9a9e59b69a1b66
+    sha256: e23ae164c8936e78b7ccfce497f329968df4a7fb80ee9126d21e0855b9fecca8
     patches:
       # https://github.com/conda-forge/staged-recipes/pull/27526#issuecomment-2340403320
       - conda-forge-xdg-data_dirs.patch
