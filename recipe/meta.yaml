@@ -1,4 +1,4 @@
-{% set version = "0.8.3" %}
+{% set version = "0.8.4" %}
 
 package:
   name: mangohud
@@ -6,7 +6,7 @@ package:
 
 source:
   - url: https://github.com/flightlessmango/MangoHud/archive/refs/tags/v{{ version }}.tar.gz
-    sha256: a95f0643428cdfc095bbbd72a540308bf19bc9f3fb066c2a4cc203422e3a728e
+    sha256: 0f79671dbc825f33d7014088cb7750c166934ade26bbd6007a171aa2d960cd2f
     patches:
       # https://github.com/conda-forge/staged-recipes/pull/27526#issuecomment-2340403320
       - conda-forge-xdg-data_dirs.patch
