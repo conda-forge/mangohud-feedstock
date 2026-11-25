@@ -13,6 +13,19 @@ source:
       # Without this flag, it is too easy to freeze on vulkan apps
       # https://github.com/flightlessmango/MangoHud/issues/1354
       - flag_for_disable_preload.patch
+      # dlsym(RTLD_NEXT, ...) resolved relative to the shim, causing apps using
+      # numpy+MKL (libiomp5 ompt_start_tool) to spin forever at startup
+      # https://github.com/flightlessmango/MangoHud/issues/2177
+      # https://github.com/flightlessmango/MangoHud/commit/8bd15ed92667a31427af2c219bc8d2847702f274
+      # https://github.com/flightlessmango/MangoHud/commit/cb08356576d30cd3a4728a23241778b169126611
+      - fix-dlsym-rtld-next-chaining.patch
+      # eglGetDisplay hook could segfault on X11/GBM native displays
+      # https://github.com/flightlessmango/MangoHud/issues/2205
+      # https://github.com/flightlessmango/MangoHud/commit/2bfd645a98bbdde84eb87b247e5906295379bdf0
+      - egl-wl_display-interface-compare.patch
+      # Wayland proxies destroyed after the app's wl_display at exit
+      # https://github.com/flightlessmango/MangoHud/commit/c2775963f6f419286a3f5f539f6beb0d936bfaad
+      - wayland-fix-use-after-free-on-exit.patch
   - url: https://github.com/ocornut/imgui/archive/refs/tags/v1.89.9.tar.gz
     sha256: 1acc27a778b71d859878121a3f7b287cd81c29d720893d2b2bf74455bf9d52d6
     folder: subprojects/imgui-1.89.9
@@ -39,7 +52,7 @@ source:
     folder: subprojects/Vulkan-Headers-1.2.158
 
 build:
-  number: 0
+  number: 1
   # No support for osx https://github.com/flightlessmango/MangoHud/issues/1425
   skip: true  # [osx]
   # I'm having trouble with windows and finding python-mako

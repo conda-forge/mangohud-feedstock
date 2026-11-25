@@ -1,0 +1,135 @@
+Fix dlsym() interposer so RTLD_NEXT lookups resolve from the real caller
+
+MangoHud's LD_PRELOAD'd shim overrides dlsym(). In v0.8.4 every lookup,
+including RTLD_NEXT ones, is forwarded via real_dlsym(), so RTLD_NEXT is
+resolved relative to libMangoHud_shim.so rather than the library that
+called dlsym(). Libraries that use dlsym(RTLD_NEXT, <own symbol>) to
+chain to a later definition then get their own function back. E.g. Intel
+OpenMP (libiomp5, pulled in by numpy+MKL) does this for
+ompt_start_tool() and spins forever at 100% CPU, freezing the app.
+
+Unhooked lookups are now forwarded through the next dlsym() in the chain
+with a (must)tail call so the original caller's return address is kept.
+
+Backport (squashed, adapted to the v0.8.4 file layout, which has
+src/real_dlsym.{c,h} instead of mangohud-next/client/) of:
+  https://github.com/flightlessmango/MangoHud/commit/8bd15ed92667a31427af2c219bc8d2847702f274
+  https://github.com/flightlessmango/MangoHud/commit/cb08356576d30cd3a4728a23241778b169126611
+Upstream issue: https://github.com/flightlessmango/MangoHud/issues/2177
+
+diff --git a/src/gl/shim.c b/src/gl/shim.c
+index 3b039efb..4b0e6755 100644
+--- a/src/gl/shim.c
++++ b/src/gl/shim.c
+@@ -201,6 +201,20 @@ static struct func_ptr hooks[] = {
+ #define ARRAY_SIZE(arr) sizeof(arr)/sizeof(arr[0])
+ #endif
+ 
++static void* find_hook(const char *name)
++{
++    if (!name)
++        return NULL;
++
++    for (unsigned i = 0; i < ARRAY_SIZE(hooks); i++)
++    {
++        if (!strcmp(hooks[i].name, name))
++            return hooks[i].ptr;
++    }
++
++    return NULL;
++}
++
+ #include <stddef.h>
+ 
+ // Glibc has nonconformance behaviour
+@@ -259,8 +273,13 @@ static void save_and_consume_real_dlerror()
+     memcpy(error_override, recent_error, error_length + 1);
+ }
+ 
+-void* dlsym(void *handle, const char *name)
++MANGOHUD_DLSYM_ATTRIBUTES void* dlsym(void *handle, const char *name)
+ {
++    void *hook = find_hook(name);
++
++    if (!hook)
++        MANGOHUD_MUSTTAIL return get_next_dlsym()(handle, name);
++
+     save_and_consume_real_dlerror();
+     // const char* dlsym_enabled = getenv("MANGOHUD_DLSYM");
+     const char* dlsym_RTLD_DEFAULT_env = getenv("MANGOHUD_DLSYM_RTLD_DEFAULT_FIX");
+@@ -310,15 +329,7 @@ void* dlsym(void *handle, const char *name)
+     activate_override = fn_ptr != NULL;
+ 
+     if (!is_angle && fn_ptr)
+-    {
+-        for (unsigned i = 0; i < ARRAY_SIZE(hooks); i++)
+-        {
+-            if (!strcmp(hooks[i].name, name))
+-            {
+-                return hooks[i].ptr;
+-            }
+-        }
+-    }
++        return hook;
+ 
+     return fn_ptr;
+ }
+diff --git a/src/real_dlsym.c b/src/real_dlsym.c
+index 3f1abd9a..49786abb 100644
+--- a/src/real_dlsym.c
++++ b/src/real_dlsym.c
+@@ -107,6 +107,22 @@ void *real_dlsym(void *handle, const char *symbol)
+     return result;
+ }
+ 
++dlsym_func get_next_dlsym(void)
++{
++    static dlsym_func next;
++    dlsym_func result = __atomic_load_n(&next, __ATOMIC_ACQUIRE);
++    if (!result)
++    {
++        // Keep other interposers in the chain without reopening any libraries:
++        // even RTLD_NOLOAD can run constructors during loader initialization.
++        result = (dlsym_func)real_dlsym(RTLD_NEXT, "dlsym");
++        if (!result)
++            result = __dlsym;
++        __atomic_store_n(&next, result, __ATOMIC_RELEASE);
++    }
++    return result;
++}
++
+ char* real_dlerror(void)
+ {
+     if (__dlerror == NULL)
+diff --git a/src/real_dlsym.h b/src/real_dlsym.h
+index 3f32f778..c47d9ce0 100644
+--- a/src/real_dlsym.h
++++ b/src/real_dlsym.h
+@@ -4,11 +4,27 @@
+ 
+ #define EXPORT_C_(type) extern "C" __attribute__((__visibility__("default"))) type
+ 
++// Forwarding dlsym must preserve its caller for RTLD_NEXT lookups.
++#if defined(__has_attribute)
++# if __has_attribute(musttail)
++#  define MANGOHUD_MUSTTAIL __attribute__((musttail))
++# endif
++#endif
++#ifdef MANGOHUD_MUSTTAIL
++# define MANGOHUD_DLSYM_ATTRIBUTES
++#else
++# define MANGOHUD_MUSTTAIL
++// Older GCC needs sibling-call optimization even in debug builds.
++# define MANGOHUD_DLSYM_ATTRIBUTES __attribute__((optimize("O2", "optimize-sibling-calls")))
++#endif
++
+ #ifdef __cplusplus
+ extern "C" {
+ #endif
++typedef void *(*dlsym_func)(void *, const char *);
+ void *real_dlopen(const char *filename, int flag);
+ void* real_dlsym( void*, const char* );
++dlsym_func get_next_dlsym(void);
+ void* get_proc_address(const char* name);
+ char* real_dlerror(void);
+ #ifdef __cplusplus

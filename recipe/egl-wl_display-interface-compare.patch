@@ -1,0 +1,40 @@
+egl: compare the wl_display interface by address in eglGetDisplay
+
+The hook read the first pointer of the native display as a wl_interface*
+and compared its name. An Xlib Display or gbm_device does not start with
+one, so the strcmp followed junk and could segfault.
+
+Backport of:
+  https://github.com/flightlessmango/MangoHud/commit/2bfd645a98bbdde84eb87b247e5906295379bdf0
+Upstream issue: https://github.com/flightlessmango/MangoHud/issues/2205
+
+diff --git a/src/gl/inject_egl.cpp b/src/gl/inject_egl.cpp
+index 095632ca..0eb66cab 100644
+--- a/src/gl/inject_egl.cpp
++++ b/src/gl/inject_egl.cpp
+@@ -312,21 +312,11 @@ EXPORT_C_(void*) eglGetDisplay( void* native_display )
+     ret = pfn_eglGetDisplay(native_display);
+ 
+ #ifdef HAVE_WAYLAND
+-    try
+-    {
+-        void** display_ptr = (void**)native_display;
+-        if (native_display && ret)
+-        {
+-            wl_interface* iface = (wl_interface*)*display_ptr;
+-            if (iface && strcmp(iface->name, wl_display_interface.name) == 0)
+-            {
+-                HUDElements.display_server = HUDElements.display_servers::WAYLAND;
+-                init_wayland_data((struct wl_display*)native_display, ret);
+-            }
+-        }
+-    }
+-    catch(...)
++    if (native_display && ret &&
++        *(const void**)native_display == &wl_display_interface)
+     {
++        HUDElements.display_server = HUDElements.display_servers::WAYLAND;
++        init_wayland_data((struct wl_display*)native_display, ret);
+     }
+ #endif
+ 
